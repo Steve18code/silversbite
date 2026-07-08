@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
+
+enum SenderType {
+  CUSTOMER
+  OWNER
+  STAFF
+  AI
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  TRANSFER_ON_DELIVERY
+  ONLINE
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProviderName {
+  PAYSTACK
+  FLUTTERWAVE
+}
+
+/// Dashboard login — separate from WhatsApp "owner" identity (see OwnerNumber).
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  refreshToken String?
+  createdAt    DateTime @default(now())
+
+  @@map("users")
+}
+
+/// Allow-listed WhatsApp numbers permitted to run owner tools (add/edit menu, etc.)
+model OwnerNumber {
+  id          String   @id @default(cuid())
+  phoneNumber String   @unique
+  label       String?
+  createdAt   DateTime @default(now())
+
+  @@map("owner_numbers")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  phoneNumber String   @unique
+  name        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  conversations Conversation[]
+  orders        Order[]
+
+  @@map("customers")
+}
+
+model Conversation {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  state       Json     @default("{}")
+  isHandedOff Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  messages Message[]
+
+  @@index([customerId])
+  @@map("conversations")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderType     SenderType
+  content        String
+  mediaUrl       String?
+  transcript     String?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@map("messages")
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  order Int    @default(0)
+
+  items MenuItem[]
+
+  @@map("categories")
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priceKobo   Int
+  isAvailable Boolean  @default(true)
+  imageUrl    String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@map("menu_items")
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(UNPAID)
+  paymentRef      String?
+  deliveryAddress String
+  deliveryNotes   String?
+  totalKobo       Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  items         OrderItem[]
+  statusHistory OrderStatusEvent[]
+
+  @@index([customerId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id])
+  menuItemId    String
+  menuItem      MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity      Int
+  unitPriceKobo Int
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  @@index([orderId])
+  @@map("order_status_events")
+}
+
+/// Audit trail for AI/owner menu mutations.
+model MenuAuditLog {
+  id         String   @id @default(cuid())
+  actorPhone String
+  action     String
+  detail     Json
+  createdAt  DateTime @default(now())
+
+  @@map("menu_audit_logs")
+}
+
+/// Staged extraction from an uploaded Menu.pdf, pending owner confirmation.
+model MenuImportDraft {
+  id        String   @id @default(cuid())
+  sourceUrl String
+  extracted Json
+  confirmed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("menu_import_drafts")
+}
