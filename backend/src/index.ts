@@ -7,9 +7,12 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import { closeAllQueues } from './queue/queue';
 import { testRouter } from './routes/test';
 import { authRouter } from './routes/auth';
+import { captureRawBody } from './middleware/capture-raw-body';
+import { whatsappWebhookRouter } from './routes/webhooks/whatsapp';
 
 const app = express();
 
+app.use(express.json({ verify: captureRawBody }));
 app.use(requestId);
 app.use(
   pinoHttp({
@@ -17,9 +20,8 @@ app.use(
     genReqId: (req) => (req as express.Request).requestId,
   }),
 );
-app.use(express.json());
 app.use('/api/auth', authRouter);
-app.use(express.json());
+app.use('/webhooks/whatsapp', whatsappWebhookRouter);
 
 app.get('/health', (_req, res) => {
   res.status(200).json({ status: 'ok', service: 'silverbites-backend' });

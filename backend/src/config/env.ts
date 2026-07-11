@@ -30,6 +30,21 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
 
+  /*
+  GOOGLE_CLOUD_PROJECT_ID: z.string().min(1, 'GOOGLE_CLOUD_PROJECT_ID is required from Gate 5 onward'),
+  GOOGLE_CLOUD_CREDENTIALS_JSON: z
+    .string()
+    .min(1, 'GOOGLE_CLOUD_CREDENTIALS_JSON is required from Gate 5 onward')
+    .refine((val) => {
+      try {
+        JSON.parse(val);
+        return true;
+      } catch {
+        return false;
+      }
+    }, 'GOOGLE_CLOUD_CREDENTIALS_JSON must be valid JSON (the full service account key, as one line)'),
+    */
+
   PAYSTACK_SECRET_KEY: z.string().optional(),
   FLUTTERWAVE_SECRET_KEY: z.string().optional(),
 });
@@ -38,7 +53,10 @@ const parsed = envSchema.safeParse(proc.env);
 
 if (!parsed.success) {
   // Log via globalThis to avoid relying on the ambient `console` identifier
-  (globalThis as any).console?.error?.('❌ Invalid environment configuration:', parsed.error.flatten().fieldErrors);
+  (globalThis as any).console?.error?.(
+    '❌ Invalid environment configuration:',
+    parsed.error.flatten().fieldErrors,
+  );
   process.exit(1);
 }
 

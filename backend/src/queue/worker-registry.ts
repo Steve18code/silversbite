@@ -2,20 +2,8 @@ import { Worker } from 'bullmq';
 import { getRedisConnectionOptions } from '../config/redis';
 import { logger } from '../config/logger';
 import { QUEUE_NAMES } from './queue-names';
-/* eslint-disable @typescript-eslint/no-var-requires */
-let processTestJob: any;
-try {
-  // Try to require the processor. Use require to avoid TS compile-time module resolution
-  // errors when the file is missing; fallback to a no-op processor.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('./processors/test-processor');
-  processTestJob = mod.processTestJob ?? mod.default ?? mod;
-} catch (err) {
-  // Fallback processor that does nothing
-  processTestJob = async () => {
-    /* no-op fallback processor */
-  };
-}
+import { processTestJob } from './processors/test-processors';
+import { processWhatsAppInbound } from './processors/whatsapp-inbound-processor';
 
 /**
  * Starts one BullMQ Worker per queue. Called once from the process entrypoint
@@ -27,7 +15,12 @@ export function startWorkers(): Worker[] {
     connection: getRedisConnectionOptions(),
   });
 
-  const workers = [testWorker];
+  const whatsappInboundWorker = new Worker(QUEUE_NAMES.WHATSAPP_INBOUND, processWhatsAppInbound, {
+    connection: getRedisConnectionOptions(),
+    concurrency: 5,
+  });
+
+  const workers = [testWorker, whatsappInboundWorker];
 
   for (const worker of workers) {
     worker.on('completed', (job) => {
