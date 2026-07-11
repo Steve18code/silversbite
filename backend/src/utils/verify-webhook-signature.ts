@@ -1,31 +1,18 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac } from 'crypto';
 import { env } from '../config/env';
 
-export function verifyWebhookSignature(
-  rawBody: Buffer,
-  signatureHeader: string | undefined,
-): boolean {
-  if (!signatureHeader || !signatureHeader.startsWith('sha256=')) {
+export function verifyWebhookSignature(body: Buffer, signature: string | undefined): boolean {
+  if (!signature) {
     return false;
   }
 
-  const expectedSignature = signatureHeader.slice('sha256='.length);
+  const [algorithm, hash] = signature.split('=');
 
-  const appSecret = env.WHATSAPP_APP_SECRET;
-  if (!appSecret) {
+  if (algorithm !== 'sha256' || !hash) {
     return false;
   }
 
-  const computedSignature = createHmac('sha256', appSecret)
-    .update(rawBody)
-    .digest('hex');
+  const expectedHash = createHmac('sha256', env.WHATSAPP_APP_SECRET).update(body).digest('hex');
 
-  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
-  const computedBuffer = Buffer.from(computedSignature, 'hex');
-
-  if (expectedBuffer.length !== computedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(expectedBuffer, computedBuffer);
+  return hash === expectedHash;
 }
