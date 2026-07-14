@@ -2,17 +2,26 @@ import type { Job } from 'bullmq';
 import { logger } from '../../config/logger';
 import { getOrCreateCustomer } from '../../services/customer-service';
 import { getOrCreateActiveConversation, appendMessage } from '../../services/conversation-service';
-import { isOwnerNumber } from '../../services/owner-services';
+import { isOwnerNumber } from '../../services/owner-service';
 import { downloadMedia, sendTextMessage, markMessageAsRead } from '../../services/whatsapp-client';
 import { transcribeAudio } from '../../services/transcription-service';
 import { uploadMedia } from '../../services/storage-service';
 import type { WhatsAppInboundJobData } from './whatsapp-inbound-job';
 
+/**
+ * Gate 5 scope: persist every inbound message correctly (text or voice,
+ * customer or owner) and prove the full pipeline works end-to-end with a
+ * real reply. The reply text here is a placeholder — Gate 7's AI Engine
+ * replaces this function's reply-generation with real tool-calling
+ * conversation logic. Persistence/transcription/customer-recognition stay
+ * exactly as built here.
+ */
 export async function processWhatsAppInbound(job: Job<WhatsAppInboundJobData>): Promise<void> {
   const msg = job.data;
   logger.info({ from: msg.fromPhoneNumber, type: msg.type }, 'Processing inbound WhatsApp message');
 
   await markMessageAsRead(msg.waMessageId).catch((err) => {
+    // Non-critical — don't fail the whole job over a read receipt.
     logger.warn({ err }, 'Failed to mark message as read');
   });
 
@@ -37,6 +46,7 @@ export async function processWhatsAppInbound(job: Job<WhatsAppInboundJobData>): 
     const { buffer, mimeType } = await downloadMedia(msg.mediaId);
     mediaUrl = await uploadMedia(buffer, mimeType, `${msg.type}s/${customer.id}`);
     content = `[${msg.type}]`;
+    // Gate 8 will hand image/document buffers to the AI for menu-PDF parsing.
   }
 
   await appendMessage({
@@ -47,6 +57,7 @@ export async function processWhatsAppInbound(job: Job<WhatsAppInboundJobData>): 
     transcript,
   });
 
+  // --- Placeholder reply (Gate 7 replaces this block entirely) ---
   const effectiveText = transcript ?? content;
   const reply = ownerStatus
     ? `Got it — you said: "${effectiveText}". Menu management via chat lands in Gate 8; for now this just confirms the pipeline works.`

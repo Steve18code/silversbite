@@ -11,6 +11,7 @@ describe('extractTranscript', () => {
         ],
       },
     ];
+
     expect(extractTranscript(results)).toBe('I want two jollof rice');
   });
 
@@ -19,6 +20,7 @@ describe('extractTranscript', () => {
       { alternatives: [{ transcript: 'I want two jollof rice' }] },
       { alternatives: [{ transcript: 'and one coke please' }] },
     ];
+
     expect(extractTranscript(results)).toBe('I want two jollof rice and one coke please');
   });
 
@@ -40,6 +42,7 @@ describe('extractTranscript', () => {
       { alternatives: [] },
       { alternatives: [{ transcript: 'world' }] },
     ];
+
     expect(extractTranscript(results)).toBe('hello world');
   });
 

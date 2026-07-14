@@ -2,37 +2,21 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getQueue } from '../queue/queue';
 import { QUEUE_NAMES } from '../queue/queue-names';
+import type { TestJobData } from '../queue/processors/test-processor';
 import { asyncHandler } from '../middleware/error-handler';
-// Local fallback error classes to avoid importing from ../errors/app-error
-class ValidationError extends Error {
-  statusCode: number;
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-    this.statusCode = 400;
-  }
-}
-
-class NotFoundError extends Error {
-  statusCode: number;
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
-    this.statusCode = 404;
-  }
-}
+import { ValidationError, NotFoundError } from '../errors/app-error';
 
 export const testRouter = Router();
-
-// Job data types
-type TestJobData = {
-  message: string;
-};
 
 const enqueueSchema = z.object({
   message: z.string().min(1),
 });
 
+/**
+ * POST /test/enqueue { "message": "hello" }
+ * Enqueues a job onto the "test" queue and returns its ID immediately —
+ * proves the HTTP layer never blocks on the actual work.
+ */
 testRouter.post(
   '/enqueue',
   asyncHandler(async (req, res) => {
@@ -48,6 +32,11 @@ testRouter.post(
   }),
 );
 
+/**
+ * GET /test/job/:id
+ * Lets you poll a job's state/result — useful for confirming the worker
+ * actually picked it up and completed it.
+ */
 testRouter.get(
   '/job/:id',
   asyncHandler(async (req, res) => {
@@ -68,6 +57,11 @@ testRouter.get(
   }),
 );
 
+/**
+ * GET /test/boom
+ * Deliberately throws to prove errorHandler catches unexpected errors
+ * and never leaks a raw stack trace to the client.
+ */
 testRouter.get(
   '/boom',
   asyncHandler(async () => {

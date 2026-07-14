@@ -1,18 +1,24 @@
-// Use require() to avoid TypeScript module augmentation errors when the
-// package has no type declarations in this project.
-// @ts-ignore: ignore missing module type declarations for @google-cloud/speech
-const { SpeechClient, protos } = require('@google-cloud/speech');
+import { SpeechClient, protos } from '@google-cloud/speech';
 import { env } from '../config/env';
 import { logger } from '../config/logger';
 
-type SpeechRecognitionResult = any;
+type SpeechRecognitionResult = protos.google.cloud.speech.v1.ISpeechRecognitionResult;
 
 const speechClient = new SpeechClient({
   projectId: env.GOOGLE_CLOUD_PROJECT_ID,
   credentials: JSON.parse(env.GOOGLE_CLOUD_CREDENTIALS_JSON),
 });
 
-export function extractTranscript(results: SpeechRecognitionResult[] | null | undefined): string {
+/**
+ * Pure function extracting the transcript text from Google's response shape.
+ * Split out from transcribeAudio so it's testable without a real API call —
+ * Google can return multiple result segments for longer audio, each with
+ * multiple alternatives ranked by confidence; we want the top alternative
+ * from every segment, joined into one string.
+ */
+export function extractTranscript(
+  results: SpeechRecognitionResult[] | null | undefined,
+): string {
   return (results ?? [])
     .map((result) => result.alternatives?.[0]?.transcript ?? '')
     .filter((text) => text.length > 0)
@@ -20,6 +26,17 @@ export function extractTranscript(results: SpeechRecognitionResult[] | null | un
     .trim();
 }
 
+/**
+ * Transcribes a voice note buffer using Google Cloud Speech-to-Text.
+ *
+ * WhatsApp voice notes arrive as OGG/Opus, 16kHz mono — matches Google's
+ * OGG_OPUS encoding directly, no conversion needed. `en-NG` (Nigerian
+ * English) is set as the primary language; note this does NOT have strong
+ * Pidgin support specifically (Google has no dedicated Pidgin language
+ * code) — Whisper handles Pidgin/code-switching better, which is why the
+ * roadmap has a planned transition back to Whisper once free-tier economics
+ * matter less than transcription quality.
+ */
 export async function transcribeAudio(buffer: Buffer, _mimeType: string): Promise<string> {
   try {
     const [response] = await speechClient.recognize({

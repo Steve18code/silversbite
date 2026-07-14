@@ -94,12 +94,7 @@ describe('parseInboundMessages', () => {
                 messaging_product: 'whatsapp',
                 metadata: { display_phone_number: '2348000000000', phone_number_id: 'pnid123' },
                 statuses: [
-                  {
-                    id: 'wamid.out1',
-                    status: 'delivered',
-                    timestamp: '1720000002',
-                    recipient_id: '234801234',
-                  },
+                  { id: 'wamid.out1', status: 'delivered', timestamp: '1720000002', recipient_id: '234801234' },
                 ],
               },
             },

@@ -2,7 +2,7 @@ import { Worker } from 'bullmq';
 import { getRedisConnectionOptions } from '../config/redis';
 import { logger } from '../config/logger';
 import { QUEUE_NAMES } from './queue-names';
-import { processTestJob } from './processors/test-processors';
+import { processTestJob } from './processors/test-processor';
 import { processWhatsAppInbound } from './processors/whatsapp-inbound-processor';
 
 /**

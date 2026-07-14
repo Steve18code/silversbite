@@ -1,6 +1,8 @@
 import { createHmac } from 'crypto';
 import { describe, expect, it, vi } from 'vitest';
 
+// Must mock env BEFORE importing the module under test, since env.ts
+// validates process.env at import time.
 vi.mock('../config/env', () => ({
   env: { WHATSAPP_APP_SECRET: 'test-app-secret' },
 }));

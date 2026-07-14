@@ -9,11 +9,7 @@ import { env } from './env';
  * lets BullMQ own the connection lifecycle for Queues and Workers.
  */
 export function getRedisConnectionOptions() {
-  const redisUrl = env.REDIS_URL;
-  if (!redisUrl) {
-    throw new Error('REDIS_URL must be defined');
-  }
-  const url = new URL(redisUrl);
+  const url = new URL(env.REDIS_URL);
 
   return {
     host: url.hostname,

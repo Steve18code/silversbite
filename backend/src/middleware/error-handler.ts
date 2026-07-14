@@ -1,24 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { logger } from '../config/logger';
-
-// Local type guard for AppError-like objects. Importing the AppError class
-// caused a TS error when the module wasn't present, so we detect by shape
-// instead which is sufficient for error handling here.
-interface AppErrorLike {
-  statusCode: number;
-  message: string;
-}
-
-function isAppError(err: unknown): err is AppErrorLike {
-  return (
-    typeof err === 'object' &&
-    err !== null &&
-    'statusCode' in err &&
-    typeof (err as any).statusCode === 'number' &&
-    'message' in err &&
-    typeof (err as any).message === 'string'
-  );
-}
+import { AppError } from '../errors/app-error';
 
 /**
  * Catches everything that reaches it — thrown in a route, passed to next(err),
@@ -32,7 +14,7 @@ export function errorHandler(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction,
 ): void {
-  if (isAppError(err)) {
+  if (err instanceof AppError) {
     logger.warn({ err, requestId: req.requestId }, err.message);
     res.status(err.statusCode).json({
       error: err.message,

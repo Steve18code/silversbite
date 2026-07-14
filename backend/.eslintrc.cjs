@@ -3,17 +3,15 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     project: './tsconfig.eslint.json',
-    _tsconfigRootDir: __dirname,
-    get tsconfigRootDir() {
-      return this._tsconfigRootDir;
-    },
-    set tsconfigRootDir(value) {
-      this._tsconfigRootDir = value;
-    },
+    tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint'],
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'prettier',
+  ],
   env: {
     node: true,
     es2022: true,

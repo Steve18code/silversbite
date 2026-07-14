@@ -6,7 +6,7 @@ import {
   generateRefreshToken,
   verifyAccessToken,
   verifyRefreshToken,
-} from '../services/auth-services';
+} from '../services/auth-service';
 
 describe('auth-service: password hashing', () => {
   it('hashes a password and verifies the correct password against it', async () => {

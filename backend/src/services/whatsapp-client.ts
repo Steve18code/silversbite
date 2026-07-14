@@ -4,6 +4,12 @@ import { logger } from '../config/logger';
 const GRAPH_API_VERSION = 'v21.0';
 const GRAPH_BASE_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
+/**
+ * All calls go through the Graph API using the phone number's ID (not the
+ * phone number itself) as the endpoint identifier — that's how Meta's Cloud
+ * API is addressed. WHATSAPP_ACCESS_TOKEN is the permanent/system-user token
+ * generated in Meta's App Dashboard.
+ */
 function graphUrl(path: string): string {
   return `${GRAPH_BASE_URL}/${path}`;
 }
@@ -27,6 +33,11 @@ async function graphRequest<T>(url: string, init: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+/**
+ * Sends a plain text message. Meta requires messages be sent within a
+ * 24-hour customer-service window unless using a pre-approved template —
+ * fine for our use case since we're always replying to an inbound message.
+ */
 export async function sendTextMessage(to: string, body: string): Promise<void> {
   await graphRequest(graphUrl(`${env.WHATSAPP_PHONE_NUMBER_ID}/messages`), {
     method: 'POST',
@@ -42,6 +53,10 @@ export async function sendTextMessage(to: string, body: string): Promise<void> {
   logger.info({ to }, 'Sent WhatsApp text message');
 }
 
+/**
+ * Marks an inbound message as read (blue ticks). Good practice so the
+ * customer knows the message landed, even before the AI/queue has replied.
+ */
 export async function markMessageAsRead(messageId: string): Promise<void> {
   await graphRequest(graphUrl(`${env.WHATSAPP_PHONE_NUMBER_ID}/messages`), {
     method: 'POST',
@@ -60,9 +75,13 @@ interface MediaUrlResponse {
   file_size: number;
 }
 
-export async function downloadMedia(
-  mediaId: string,
-): Promise<{ buffer: Buffer; mimeType: string }> {
+/**
+ * Media in WhatsApp webhooks arrives as a `media_id`, not a direct URL.
+ * Two-step fetch: (1) resolve the id to a short-lived download URL,
+ * (2) download the actual bytes from that URL — both require the same
+ * bearer token, and the URL expires after a few minutes.
+ */
+export async function downloadMedia(mediaId: string): Promise<{ buffer: Buffer; mimeType: string }> {
   const meta = await graphRequest<MediaUrlResponse>(graphUrl(mediaId), {
     method: 'GET',
     headers: authHeaders(),

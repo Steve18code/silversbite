@@ -30,13 +30,9 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
 
-  WHATSAPP_PHONE_NUMBER_ID: z
-    .string()
-    .min(1, 'WHATSAPP_PHONE_NUMBER_ID is required from Gate 5 onward'),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1, 'WHATSAPP_PHONE_NUMBER_ID is required from Gate 5 onward'),
   WHATSAPP_ACCESS_TOKEN: z.string().min(1, 'WHATSAPP_ACCESS_TOKEN is required from Gate 5 onward'),
-  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z
-    .string()
-    .min(1, 'WHATSAPP_WEBHOOK_VERIFY_TOKEN is required from Gate 5 onward'),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_WEBHOOK_VERIFY_TOKEN is required from Gate 5 onward'),
   WHATSAPP_APP_SECRET: z.string().min(1, 'WHATSAPP_APP_SECRET is required from Gate 5 onward'),
 
   ANTHROPIC_API_KEY: z.string().optional(),
@@ -49,9 +45,7 @@ const envSchema = z.object({
   // GOOGLE_CLOUD_CREDENTIALS_JSON holds the full service account key JSON as
   // a single-line string (not a file path) — simpler to deploy via Docker/
   // env vars than mounting a credentials file into the container.
-  GOOGLE_CLOUD_PROJECT_ID: z
-    .string()
-    .min(1, 'GOOGLE_CLOUD_PROJECT_ID is required from Gate 5 onward'),
+  GOOGLE_CLOUD_PROJECT_ID: z.string().min(1, 'GOOGLE_CLOUD_PROJECT_ID is required from Gate 5 onward'),
   GOOGLE_CLOUD_CREDENTIALS_JSON: z
     .string()
     .min(1, 'GOOGLE_CLOUD_CREDENTIALS_JSON is required from Gate 5 onward')

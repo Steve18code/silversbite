@@ -1,5 +1,3 @@
-/// <reference types="node" />
-// @ts-ignore: Prisma client package may not be available until installed/generated.
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -7,11 +5,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding Silverbites database...');
 
+  // Allow-listed owner number — replace with the real restaurant owner's
+  // WhatsApp number before going live. This is who can manage the menu via chat.
   await prisma.ownerNumber.upsert({
-    where: { phoneNumber: '+2347045948442' },
+    where: { phoneNumber: '+2348000000000' },
     update: {},
     create: {
-      phoneNumber: '+2347045948442',
+      phoneNumber: '+2348000000000',
       label: 'Silverbites Owner (seed placeholder)',
     },
   });

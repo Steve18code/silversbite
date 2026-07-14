@@ -1,3 +1,8 @@
+/**
+ * Minimal typed shape of what Meta actually sends. Meta's real payload has
+ * more optional fields than this; we only type what we read, and treat
+ * anything else as opaque. See: https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/payload-examples
+ */
 export interface WhatsAppWebhookPayload {
   object: string;
   entry: WhatsAppEntry[];
@@ -20,8 +25,8 @@ export interface WhatsAppChange {
 }
 
 export interface WhatsAppInboundMessage {
-  from: string;
-  id: string;
+  from: string; // sender's WhatsApp ID (phone number, no leading +)
+  id: string; // WhatsApp's message id
   timestamp: string;
   type: 'text' | 'audio' | 'image' | 'document' | 'video' | 'button' | 'interactive' | 'unknown';
   text?: { body: string };
@@ -37,6 +42,7 @@ export interface WhatsAppStatus {
   recipient_id: string;
 }
 
+/** Normalized shape our own code works with, independent of Meta's nesting. */
 export interface ParsedInboundMessage {
   waMessageId: string;
   fromPhoneNumber: string;
@@ -47,6 +53,12 @@ export interface ParsedInboundMessage {
   mediaMimeType?: string;
 }
 
+/**
+ * Flattens Meta's deeply nested webhook payload into a simple list of
+ * inbound messages. Status updates (delivered/read receipts for OUR
+ * outbound messages) are intentionally ignored here — not something the
+ * conversation engine needs to react to.
+ */
 export function parseInboundMessages(payload: WhatsAppWebhookPayload): ParsedInboundMessage[] {
   const results: ParsedInboundMessage[] = [];
 
