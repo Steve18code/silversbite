@@ -30,33 +30,24 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRY: z.string().default('15m'),
   JWT_REFRESH_EXPIRY: z.string().default('7d'),
 
-  WHATSAPP_PHONE_NUMBER_ID: z.string().min(1, 'WHATSAPP_PHONE_NUMBER_ID is required from Gate 5 onward'),
+  WHATSAPP_PHONE_NUMBER_ID: z
+    .string()
+    .min(1, 'WHATSAPP_PHONE_NUMBER_ID is required from Gate 5 onward'),
   WHATSAPP_ACCESS_TOKEN: z.string().min(1, 'WHATSAPP_ACCESS_TOKEN is required from Gate 5 onward'),
-  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z.string().min(1, 'WHATSAPP_WEBHOOK_VERIFY_TOKEN is required from Gate 5 onward'),
+  WHATSAPP_WEBHOOK_VERIFY_TOKEN: z
+    .string()
+    .min(1, 'WHATSAPP_WEBHOOK_VERIFY_TOKEN is required from Gate 5 onward'),
   WHATSAPP_APP_SECRET: z.string().min(1, 'WHATSAPP_APP_SECRET is required from Gate 5 onward'),
 
   ANTHROPIC_API_KEY: z.string().optional(),
 
-  // OpenAI/Whisper is planned for a future transition — not used yet, kept
-  // optional so it doesn't block startup.
+  // Speech-to-text is disabled for now (Gate 5 feature paused). Both
+  // Whisper and Google Cloud STT options kept optional so re-enabling
+  // either later doesn't require an env-schema change, just uncommenting
+  // the transcription call in whatsapp-inbound-processor.ts.
   OPENAI_API_KEY: z.string().optional(),
-
-  // Google Cloud Speech-to-Text — current transcription provider for Gate 5.
-  // GOOGLE_CLOUD_CREDENTIALS_JSON holds the full service account key JSON as
-  // a single-line string (not a file path) — simpler to deploy via Docker/
-  // env vars than mounting a credentials file into the container.
-  GOOGLE_CLOUD_PROJECT_ID: z.string().min(1, 'GOOGLE_CLOUD_PROJECT_ID is required from Gate 5 onward'),
-  GOOGLE_CLOUD_CREDENTIALS_JSON: z
-    .string()
-    .min(1, 'GOOGLE_CLOUD_CREDENTIALS_JSON is required from Gate 5 onward')
-    .refine((val) => {
-      try {
-        JSON.parse(val);
-        return true;
-      } catch {
-        return false;
-      }
-    }, 'GOOGLE_CLOUD_CREDENTIALS_JSON must be valid JSON (the full service account key, as one line)'),
+  GOOGLE_CLOUD_PROJECT_ID: z.string().optional(),
+  GOOGLE_CLOUD_CREDENTIALS_JSON: z.string().optional(),
 
   PAYSTACK_SECRET_KEY: z.string().optional(),
   FLUTTERWAVE_SECRET_KEY: z.string().optional(),
